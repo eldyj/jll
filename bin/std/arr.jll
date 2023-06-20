@@ -1,0 +1,62 @@
+(let first
+	(if (= (len (%%) 0))
+			()
+			(% 0)))
+	
+(let shift
+	(if (= (len (%%)) 0)
+			()
+			(rm 0 (%%))))
+
+(let last
+	(% (- (len %%) 1)))
+
+(let pop
+	(rm (- (len (%%)) 1)
+			(%%)))
+
+(let nshift
+	(if (= (% 0) 0)
+			(shift (%%))
+			(nshift (- (% 0) 1)
+							(shift (shift (%%))))))
+
+(let npop
+	(if (= (% 0) 0)
+			(shift (%%))
+			(npop (- (% 0) 1)
+							(shift (pop (%%))))))
+
+(let nfirst
+	(npop (- (len (%%)) 1 (% 0))
+					 (shift (%%))))
+
+(let nlast
+	(nshift (- (len (%%)) 1 (% 0))
+					(shift (%%))))
+
+(let reverse
+	(each reverse.i (range (len (%%)))
+				(% (- (len (%%)) 1 (reverse.i)))))
+
+(let slice
+	(npop (- (% 1) (- (len (%%)) 2))
+				(nshift (+ 2 (% 0)) (%%))))
+
+(let rslice (
+	(nfirst (- (% 0) 1) (nshift 2 (%%)))
+	(nlast (- (len (%%)) (% 1) 2) (nshift 2 (%%)))))
+
+(let contains
+	(| (each contains.i
+					 (shift (%%))
+					 (= (% contains.i) (% 0)))))
+
+(let find-all
+	(each find-all.i (range 1 (len (%%)))
+				(if (= (% (find-all.i))
+							 (% 0))
+						(find-all.i))))
+
+(let find
+	(first (find (%%))))

@@ -1,0 +1,28 @@
+(let 0? (= (%%) 0))
+(let 1? (= (%%) 1))
+(let false? (0? (%%)))
+(let true? (1? (%%)))
+
+(let or
+	(bit-or (each or.i (%%) (true? (or.i)))))
+
+(let and
+	(true? (%%)))
+
+(let not
+	(each not.i (%%) (0? (not.i))))
+
+(let inc
+	(each inc.i (%%) (+ (inc.i) 1)))
+
+(let dec
+	(each dec.i (%%) (- (dec.i) 1)))
+
+(let /=
+	(not (= (%%))))
+
+(let >=
+	(not (< (%%))))
+
+(let <=
+	(not (> (%%))))
