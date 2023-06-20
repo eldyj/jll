@@ -1,25 +1,32 @@
-(let factorial
-	(if (= 0 (% 0))
-			1
-			(* (% 0)
-				 (factorial (- (% 0) 1)))))
+(if (= (def? include.math) 0) (
+	(let include.math 1)
 
-(let triangular
-	(if (= 0 (% 0))
-			0
-			(+ (% 0)
-				 (triangular (- (% 0) 1)))))
+	(include std/base)
 
-(let fibonnacci
-	(if (| (= 0 (% 0))
-				 (= 1 (% 0)))
-			(% 0)
-			(+ (fibonnacci (- (% 0) 1))
-				 (fibonnacci (- (% 0) 2)))))
+	(let factorial
+		(if (zero? (% 0))
+				1
+				(* (% 0)
+					 (factorial (dec (% 0))))))
 
-(let pow
-	(if (= 0 (% 0)
-			0
-			(if (= 0 (% 1))
-					(% 1)
-					(pow (% 0) (- (% 1) 1))))))
+	(let triangular
+		(if (zero? (% 0))
+				0
+				(+ (% 0)
+					 (triangular (dec (% 0))))))
+
+	(let fibonnacci
+		(if (or (zero? (% 0))
+						(one? (% 0)))
+				(% 0)
+				(+ (fibonnacci (dec (% 0)))
+					 (fibonnacci (- (% 0) 2)))))
+
+	(let pow
+		(if (zero? (% 0)
+				0
+				(if (zero? (% 1))
+						1
+						(pow (% 0) (dec (% 1)))))))
+
+))

@@ -186,6 +186,92 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 		match fun {
 			tokenizer::Token::Ident(i) => {
 				match i.as_str() {
+					"def?" => {
+						if ret.len() != 1 {
+							eprintln!("ERR: wrong arguments count for `def?`: {} given, 1 expected",
+												ret.len());
+						}
+
+						match ret.pop().unwrap() {
+							tokenizer::Token::Ident(i) => {
+								return vec![tokenizer::Token::Digit(funcs.contains_key(&i) as u128)];
+							}
+
+							t => {
+								eprintln!("ERR: {}: wrong type for `def?`",
+													tokenizer::token_show(&t));
+
+								return vec![];
+							}
+						}
+					}
+					
+					"int" => {
+						if ret.len() == 0 {
+							eprintln!("ERR: too few arguments for `int`: 0 given, 1.. expected");
+
+							return vec![];
+						}
+
+						let tmp: Vec<tokenizer::Token> = ret.clone();
+						ret.clear();
+
+						for i in tmp {
+							match i {
+								tokenizer::Token::Digit(_) => {
+									ret.push(i.clone());
+								}
+
+								tokenizer::Token::Str(s) => {
+									ret.push(
+										tokenizer::Token::Digit(
+											s.parse::<u128>()
+												.expect(
+													format!("ERR: {}: not valid integer for `int`", s).as_str())));
+								}
+
+								_ => {
+									eprintln!("ERR: {}: invalid type for `int`",
+														tokenizer::token_show(&i));
+								}
+							}
+						}
+
+						return ret;
+					}
+
+					"str" => {
+						if ret.len() == 0 {
+							eprintln!("ERR: too few arguments for `str`: 0 given, 1.. expected");
+
+							return vec![];
+						}
+
+						let tmp: Vec<tokenizer::Token> = ret.clone();
+						ret.clear();
+
+						for i in tmp {
+							match i {
+								tokenizer::Token::Digit(d) => {
+									ret.push(tokenizer::Token::Str(format!("{}", d)));
+								}
+
+								tokenizer::Token::Str(_) => {
+									ret.push(i.clone());
+								}
+
+								_ => {
+									eprintln!("ERR: {}: invalid type for `str`",
+														tokenizer::token_show(&i));
+
+									return vec![];
+								}
+							}
+						}
+
+						return ret;
+					}
+					
 					"len" => {
 						return vec![tokenizer::Token::Digit(ret.len() as u128)];
 					}
@@ -686,7 +772,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 					
 					"range"|".." => {
 						if ret.len() == 0 {
-							eprintln!("ERR: too few arguments for `range`: 0 found, 1..3 expected");
+							eprintln!("ERR: too few arguments for `{}`: 0 found, 1..3 expected",
+												i);
 							return vec![];
 						}
 						
@@ -697,6 +784,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 
 						match token {
 							tokenizer::Token::Digit(d0) => {
+								end = d0;
+								start = 0;
 								if ret.len() > 0 {
 									let token2: tokenizer::Token = ret.remove(0);
 
@@ -768,6 +857,31 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								return vec![];
 							}
 						}
+					}
+
+					"include" => {
+						if ret.len() == 0 {
+							eprintln!("ERR: too few arguments for `include`: 0 found, 1.. expected");
+
+							return vec![];
+						}
+
+						for i in ret {
+							match i {
+								tokenizer::Token::Str(s)|tokenizer::Token::Ident(s) => {
+									run_include(s.as_str(), funcs);	
+								}
+
+								_ => {
+									eprintln!("ERR: {}: invalid type for `include`",
+														tokenizer::token_show(&i));
+
+									return vec![];
+								}
+							}
+						}
+
+						return vec![];
 					}
 
 					"eval" => {
@@ -855,7 +969,6 @@ pub fn run_str(s: &str,
 							 funcs: &mut HashMap<String, Vec<tokenizer::Token>>
 ) -> Vec<tokenizer::Token> {
 	let tokens: Vec<tokenizer::Token> = tokenizer::tokenize(s);
-	// tokenizer::print_tokens(&tokens);
 	return run_tokens(&tokens, depth, args, funcs);
 }
 
@@ -868,6 +981,10 @@ pub fn run_file(f: &str,
 		fs::read_to_string(f)
 			.expect("failed to open file")
 			.as_str(), depth, args, funcs);
+}
+
+pub fn run_include(f: &str, funcs: &mut HashMap<String, Vec<tokenizer::Token>>) -> () {
+	run_file(("/usr/include/jll/".to_owned()+f+".jll").as_str(), 0, &vec![], funcs);
 }
 
 pub fn run_file_init(f: &str) -> Vec<tokenizer::Token> {

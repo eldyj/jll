@@ -1,62 +1,67 @@
-(let first
-	(if (= (len (%%) 0))
-			()
-			(% 0)))
-	
-(let shift
-	(if (= (len (%%)) 0)
-			()
-			(rm 0 (%%))))
+(if (= (def? include.arr) 0) (
+	(let include.arr 1)
 
-(let last
-	(% (- (len %%) 1)))
+	(include std/base)
 
-(let pop
-	(rm (- (len (%%)) 1)
-			(%%)))
+	(let first
+		(if (not (zero? (len (%%))))
+				(% 0)))
+		
+	(let shift
+		(if (not (zero? (len (%%))))
+				(rm 0 (%%))))
 
-(let nshift
-	(if (= (% 0) 0)
-			(shift (%%))
-			(nshift (- (% 0) 1)
-							(shift (shift (%%))))))
+	(let last
+		(% (dec (len %%))))
 
-(let npop
-	(if (= (% 0) 0)
-			(shift (%%))
-			(npop (- (% 0) 1)
-							(shift (pop (%%))))))
+	(let pop
+		(rm (dec (len (%%)))
+				(%%)))
 
-(let nfirst
-	(npop (- (len (%%)) 1 (% 0))
-					 (shift (%%))))
+	(let nshift
+		(if (zero? (% 0))
+				(shift (%%))
+				(nshift (dec (% 0))
+								(shift (shift (%%))))))
 
-(let nlast
-	(nshift (- (len (%%)) 1 (% 0))
-					(shift (%%))))
+	(let npop
+		(if (zero? (% 0))
+				(shift (%%))
+				(npop (dec (% 0))
+								(shift (pop (%%))))))
 
-(let reverse
-	(each reverse.i (range (len (%%)))
-				(% (- (len (%%)) 1 (reverse.i)))))
+	(let nfirst
+		(npop (- (len (%%)) 1 (% 0))
+						 (shift (%%))))
 
-(let slice
-	(npop (- (% 1) (- (len (%%)) 2))
-				(nshift (+ 2 (% 0)) (%%))))
+	(let nlast
+		(nshift (- (len (%%)) 1 (% 0))
+						(shift (%%))))
 
-(let rslice (
-	(nfirst (- (% 0) 1) (nshift 2 (%%)))
-	(nlast (- (len (%%)) (% 1) 2) (nshift 2 (%%)))))
+	(let reverse
+		(each reverse.i (range (len (%%)))
+					(% (- (len (%%)) 1 (reverse.i)))))
 
-(let contains
-	(| (each contains.i
-					 (shift (%%))
-					 (= (% contains.i) (% 0)))))
+	(let slice
+		(npop (- (% 1) (- (len (%%)) 2))
+					(nshift (+ 2 (% 0)) (%%))))
 
-(let find-all
-	(each find-all.i (range 1 (len (%%)))
-				(if (= (% (find-all.i))
-							 (% 0))
-						(find-all.i))))
+	(let rslice (
+		(nfirst (dec (% 0)) (nshift 2 (%%)))
+		(nlast (- (len (%%)) (% 1) 2) (nshift 2 (%%)))))
 
-(let find
-	(first (find (%%))))
+	(let contains
+		(or (each contains.i
+							(shift (%%))
+							(= (% contains.i) (% 0)))))
+
+	(let find-all
+		(each find-all.i (range 1 (len (%%)))
+					(if (= (% (find-all.i))
+								 (% 0))
+							(find-all.i))))
+
+	(let find
+		(first (find (%%))))
+
+))
