@@ -74,8 +74,9 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 			tokenizer::Token::Ident(i) => {
 				match i.as_str() {
 					"if" => {
-						if catch_vec.len() < 2 {
-							eprintln!("ERR: too few arguments for `if`: {} given, 2..3 expected",
+						let vl: usize = catch_vec.len();
+						if vl < 2 || vl > 3 {
+							eprintln!("ERR: wrong arguments count for `if`: {} given, 2..3 expected",
 								catch_vec.len());
 
 							return vec![];
@@ -106,12 +107,15 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 
 					"each" => {
 						let vl: usize = catch_vec.len();
-						let ident: String;
 						
 						if vl != 3 {
 							eprintln!("ERR: wrong arguments count for `each`: {} given, 3 expected",
 								vl);
+
+							return vec![];
 						}
+						
+						let ident: String;
 						
 						let code: Vec<tokenizer::Token> = catch_vec.pop().unwrap();
 						let arr: Vec<tokenizer::Token> = run_tokens(&catch_vec.pop().unwrap(), depth+1, args, funcs);
@@ -144,12 +148,15 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 					}
 					
 					"let" => {
-						if catch_vec.len() != 2 {
-							eprintln!("ERR: wrong arguments count for `let`: {} given, 2 expected",
+						let vl: usize = catch_vec.len();
+						if vl < 2  {
+							eprintln!("ERR: wrong arguments count for `let`: {} given, 2.. expected",
 								catch_vec.len());
 
 							return vec![];
 						}
+
+						let mut code = catch_vec.pop().unwrap();
 
 						match catch_vec.remove(0)[0].clone() {
 							tokenizer::Token::Ident(i) => {
@@ -157,8 +164,80 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 									eprintln!("ERR: `let {i}`: function is already defined");
 									return vec![];
 								}
+
+								if vl > 2 {
+									let tok: tokenizer::Token = catch_vec.pop().unwrap()[0].clone();
+									if let tokenizer::Token::Ident(_) = tok {
+										let argc: usize = catch_vec.len();
+										let mut rest_toks: Vec<tokenizer::Token> = Vec::new();
+
+										for _ in 0..argc {
+											rest_toks.push(tokenizer::Token::OPair);
+											rest_toks.push(tokenizer::Token::Ident(String::from("rm")));
+											rest_toks.push(tokenizer::Token::Digit(0));
+										}
+
+										rest_toks.push(tokenizer::Token::OPair);
+										rest_toks.push(tokenizer::Token::Ident(String::from("%%")));
+										rest_toks.push(tokenizer::Token::CPair);
+
+										for _ in 0..argc {
+											rest_toks.push(tokenizer::Token::CPair);
+										}
+
+										let mut j: usize = 0;
+										while j < code.len() {
+											if code[j] == tok.clone() {
+												code.remove(j);
+												for (o, item) in rest_toks.clone().into_iter().enumerate() {
+													code.insert(j+o, item);
+												}
+
+												j += rest_toks.len();
+ 											}
+											j += 1;
+										}
+
+										for _ in 0..argc {
+											let arg_i: usize = catch_vec.len()-1;
+											let tok_arg: tokenizer::Token = catch_vec.pop().unwrap()[0].clone();
+											
+											let arg_vec: Vec<tokenizer::Token> = vec![
+												tokenizer::Token::OPair,
+												tokenizer::Token::Ident(String::from("%")),
+												tokenizer::Token::Digit(arg_i as u128),
+												tokenizer::Token::CPair,
+											];
+
+											if let tokenizer::Token::Ident(_) = tok_arg {
+												let mut k: usize = 0;
+												while k < code.len() {
+													if code[k] == tok_arg.clone() {
+														code.remove(k);
+														for (o, item) in arg_vec.clone().into_iter().enumerate() {
+															code.insert(k+o, item);
+														}
+
+														k += 4;
+													}
+													k += 1;
+												}
+											} else {
+												eprintln!("ERR: {}: wrong parameter argument type for `ret`",
+																	tokenizer::token_show(&tok_arg));
+
+												return vec![];
+											}
+										}
+									} else {
+										eprintln!("ERR: {}: wrong parameter argument type for `let`",
+															tokenizer::token_show(&tok));
+
+										return vec![];
+									}
+								}
 								
-								funcs.insert(i.clone(), catch_vec.remove(0));
+								funcs.insert(i.clone(), code);
 							}
 
 							name => {
@@ -321,7 +400,7 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 							tokenizer::Token::Digit(d) => {
 								let i: usize = d as usize;
 								if i >= vl-1 {
-									eprintln!("ERR: `nth {}`: index out of bounds, max {}",
+									eprintln!("ERR: `nth {}`: index out of bounds, max {} in case",
 														d, vl-1);
 
 									return vec![];
@@ -341,6 +420,13 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 					}
 					
 					"=" => {
+						let vl: usize = ret.len();
+						if vl == 0 {
+							eprintln!("ERR: wrong arguments count for `=`: {} given, 1.. expected",
+												vl);
+
+							return vec![];
+						}
 						let token: tokenizer::Token = ret.remove(0);
 						match token {
 							tokenizer::Token::Str(_)|tokenizer::Token::Digit(_) => {
@@ -350,10 +436,11 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `=` (1)",
 													tokenizer::token_show(&token));
+
+								return vec![];
 							}
 						}
 						
-						let mut val: tokenizer::Token = tokenizer::Token::Digit(1);
 						for t in ret {
 							match t {
 								tokenizer::Token::Str(_)|tokenizer::Token::Digit(_) => {
@@ -367,22 +454,19 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 							}
 							
 							if t != token {
-								val = tokenizer::Token::Digit(0);
-								break;
+								return vec![tokenizer::Token::Digit(0)];
 							}
 						}
 
-						return vec![val];
+						return vec![tokenizer::Token::Digit(1)];
 					}
 
 					"pr" => {
+						let vl: usize = ret.len();
 						let mut st: String = String::new();
-						let rl: usize = ret.len();
 
-						for i in 0..rl {
-							let t: &tokenizer::Token = &ret[i];
-
-							if i > 0 && i < rl {
+						for (i, t) in ret.into_iter().enumerate() {
+							if i > 0 && i < vl {
 								st.push(' ');
 							}
 
@@ -398,6 +482,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `pr`",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -407,13 +493,11 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 					}
 
 					"prn" => {
+						let vl: usize = ret.len();
 						let mut st: String = String::new();
-						let rl: usize = ret.len();
 
-						for i in 0..rl {
-							let t: &tokenizer::Token = &ret[i];
-							
-							if i > 0 && i < rl {
+						for (i, t) in ret.into_iter().enumerate() {							
+							if i > 0 && i < vl {
 								st.push(' ');
 							}
 							
@@ -429,6 +513,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `prn`",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -466,6 +552,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `>` (2)",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -481,12 +569,14 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 						}
 						
 						let token: tokenizer::Token = ret.remove(0);
-						let mut r: u128 = 0;
+						let mut r: u128;
 						match token {
 							tokenizer::Token::Digit(d) => r = d,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `>` (1)",
 													tokenizer::token_show(&token));
+
+								return vec![];
 							} 
 						}
 
@@ -531,6 +621,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `+` (2)",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -545,12 +637,14 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 						}
 						
 						let token: tokenizer::Token = ret.remove(0);
-						let mut r: u128 = 0;
+						let mut r: u128;
 						match token {
 							tokenizer::Token::Digit(d) => r = d,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `-` (1)",
 													tokenizer::token_show(&token));
+
+								return vec![];
 							} 
 						}
 
@@ -560,6 +654,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `-` (2)",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -574,12 +670,14 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 						}
 						
 						let token: tokenizer::Token = ret.remove(0);
-						let mut r: u128 = 0;
+						let mut r: u128;
 						match token {
 							tokenizer::Token::Digit(d) => r = d,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `*` (1)",
 													tokenizer::token_show(&token));
+
+								return vec![];
 							} 
 						}
 
@@ -589,6 +687,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `*` (2)",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -603,12 +703,14 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 						}
 						
 						let token: tokenizer::Token = ret.remove(0);
-						let mut r: u128 = 0;
+						let mut r: u128;
 						match token {
 							tokenizer::Token::Digit(d) => r = d,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `/` (1)",
 													tokenizer::token_show(&token));
+
+								return vec![];
 							} 
 						}
 
@@ -618,6 +720,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `/` (2)",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -632,12 +736,14 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 						}
 						
 						let token: tokenizer::Token = ret.remove(0);
-						let mut r: u128 = 0;
+						let mut r: u128;
 						match token {
 							tokenizer::Token::Digit(d) => r = d,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `&` (1)",
 													tokenizer::token_show(&token));
+
+								return vec![];
 							} 
 						}
 
@@ -647,6 +753,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `&` (2)",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -661,12 +769,14 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 						}
 						
 						let token: tokenizer::Token = ret.remove(0);
-						let mut r: u128 = 0;
+						let mut r: u128;
 						match token {
 							tokenizer::Token::Digit(d) => r = d,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `|` (1)",
 													tokenizer::token_show(&token));
+
+								return vec![];
 							} 
 						}
 
@@ -676,6 +786,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `|` (2)",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -690,12 +802,14 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 						}
 						
 						let token: tokenizer::Token = ret.remove(0);
-						let mut r: u128 = 0;
+						let mut r: u128;
 						match token {
 							tokenizer::Token::Digit(d) => r = d,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `&` (1)",
 													tokenizer::token_show(&token));
+
+								return vec![];
 							} 
 						}
 
@@ -705,6 +819,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `&` (2)",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -719,12 +835,14 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 						}
 						
 						let token: tokenizer::Token = ret.remove(0);
-						let mut r: u128 = 0;
+						let mut r: u128;
 						match token {
 							tokenizer::Token::Digit(d) => r = d,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `>>` (1)",
 													tokenizer::token_show(&token));
+
+								return vec![];
 							} 
 						}
 
@@ -734,6 +852,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `>>` (2)",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -748,12 +868,14 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 						}
 						
 						let token: tokenizer::Token = ret.remove(0);
-						let mut r: u128 = 0;
+						let mut r: u128;
 						match token {
 							tokenizer::Token::Digit(d) => r = d,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `<<` (1)",
 													tokenizer::token_show(&token));
+
+								return vec![];
 							} 
 						}
 
@@ -763,6 +885,8 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 								_ => {
 									eprintln!("ERR: {}: wrong type for `<<` (2)",
 														tokenizer::token_show(&t));
+
+									return vec![];
 								}
 							}
 						}
@@ -771,56 +895,57 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 					}
 					
 					"range"|".." => {
-						if ret.len() == 0 {
-							eprintln!("ERR: too few arguments for `{}`: 0 found, 1..3 expected",
-												i);
+						let vl: usize = ret.len();
+						if vl == 0 || vl > 3 {
+							eprintln!("ERR: wrong arguments count for `{}`: {} found, 1..3 expected",
+												i, vl);
+
 							return vec![];
 						}
 						
 						let token: tokenizer::Token = ret.remove(0);
 						let mut start: u128 = 0;
-						let mut end: u128 = 0;
+						let end: u128;
 						let mut step: u128 = 1;
 
 						match token {
 							tokenizer::Token::Digit(d0) => {
-								end = d0;
-								start = 0;
-								if ret.len() > 0 {
-									let token2: tokenizer::Token = ret.remove(0);
+								if vl > 1 {
+									start = d0;
+									if vl > 2 {
+										let token3: tokenizer::Token = ret.pop().unwrap();
+
+										match token3 {
+											tokenizer::Token::Digit(d2) => {
+												step = d2;
+											}
+
+											_ => {
+												eprintln!("ERR: {}: wrong type for `range` (3)",
+																	tokenizer::token_show(&token3));
+																	
+												return vec![];
+											}
+										}
+									}
+									
+									let token2: tokenizer::Token = ret.pop().unwrap();
 
 									match token2 {
 										tokenizer::Token::Digit(d1) => {
-											start = d0;
 											end = d1;
-
-											if ret.len() > 0 {
-												let token3: tokenizer::Token = ret.remove(0);
-
-												match token3 {
-													tokenizer::Token::Digit(d2) => {
-														step = d2;
-													}
-
-													_ => {
-														eprintln!("ERR: {}: wrong type for `range` (3)",
-																			tokenizer::token_show(&token3));
-													}
-												}
-											}
 										}
+										
 
 										_ => {
 											eprintln!("ERR: {}: wrong type for `range` (2)",
 																tokenizer::token_show(&token2));
+											
+											return vec![];
 										}
 									}
-								}
-
-								if ret.len() > 0 {
-									eprintln!("ERR: {}: wrong arguments count for `range`, expected 1..3, found {}",
-										tokenizer::token_show(&ret[0]), 3+ret.len());
-									return vec![];
+								} else {
+									end = d0;
 								}
 								
 								ret.clear();	
@@ -834,6 +959,7 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 							_ => {
 								eprintln!("ERR: {}: wrong type for `range` (1)",
 													tokenizer::token_show(&token));
+								return vec![];
 							}
 						}
 					}
@@ -841,6 +967,7 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 					"load" => {
 						if ret.len() == 0 {
 							eprintln!("ERR: too few arguments for `load`: 0 found, 1.. expected");
+							
 							return vec![];
 						}
 						
@@ -910,31 +1037,38 @@ pub fn run_tokens(tokens: &Vec<tokenizer::Token>,
 
 					"%"|"arg" => {
 						if ret.len() != 1 {
-							eprintln!("ERR: wrong arguments count for `{}`: {} found, 1 expected",
-								i, ret.len());
+							eprintln!("ERR: too few arguments for `{}`: 0 found, 1.. expected",
+								i);
 							
 							return vec![];
 						}
 
-						let token: tokenizer::Token = ret.remove(0);
-						match token {
-							tokenizer::Token::Digit(d) => {
-								if d as usize >= args.len() {
-									eprintln!("ERR: {}: index out of bounds for `{}`",
-														d, i);
-									return vec![];
+						let tmp: Vec<tokenizer::Token> = ret.clone();
+						ret.clear();
+						
+						for (index, token) in tmp.into_iter().enumerate() {
+							match token {
+								tokenizer::Token::Digit(d) => {
+									if d as usize >= args.len() {
+										eprintln!("ERR: {}: index out of bounds for `{}` ({})",
+															d, i, index);
+										
+										return vec![];
+									}
+
+									ret.push(args[d as usize].clone());
 								}
 
-								return vec![args[d as usize].clone()];
-							}
+								_ => {
+									eprintln!("ERR: {}: wrong type for `{}` ({})",
+														tokenizer::token_show(&token), i, index);
 
-							_ => {
-								eprintln!("ERR: {}: wrong type for `{}`",
-													tokenizer::token_show(&token), i);
-
-								return vec![];
+									return vec![];
+								}
 							}
 						}
+
+						return ret;
 					}
 
 					_ => {

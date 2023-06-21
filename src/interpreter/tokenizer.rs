@@ -47,13 +47,12 @@ pub fn token_show(t: &Token) -> String {
 	}
 }
 
-/* // was needed for debug //;
+// was needed for debug //;
 pub fn print_tokens(v: &Vec<Token>) -> () {
 	for i in 0..v.len() {
 		println!("tokens[{}] => {}", i, token_show(&v[i]));
 	}
 }
-*/
 
 macro_rules! token_push_new {
 	($token:ident, $kind:ident, $tokens:ident) =>	{

@@ -3,65 +3,64 @@
 
 	(include std/base)
 
-	(let first
-		(if (not (zero? (len (%%))))
-				(% 0)))
+	(let first one rest
+		(if (not (zero? (len (one))))
+				(one)))
 		
-	(let shift
-		(if (not (zero? (len (%%))))
-				(rm 0 (%%))))
+	(let shift _ res
+		(if (not (zero? (len _))
+				(res)))
 
-	(let last
-		(% (dec (len %%))))
+	(let last arr
+		(arg (dec (len arr))))
 
-	(let pop
-		(rm (dec (len (%%)))
-				(%%)))
+	(let pop arr
+		(rm (dec (len arr))
+				arr))
 
-	(let nshift
-		(if (zero? (% 0))
-				(shift (%%))
-				(nshift (dec (% 0))
-								(shift (shift (%%))))))
+	(let nshift n arr
+		(if (zero? n)
+				(arr))
+				(nshift (dec n)
+								(shift arr)))
 
-	(let npop
-		(if (zero? (% 0))
-				(shift (%%))
-				(npop (dec (% 0))
-								(shift (pop (%%))))))
+	(let npop n arr
+		(if (zero? n)
+				(arr)
+				(npop (dec n)
+							(pop arr))))
 
-	(let nfirst
-		(npop (- (len (%%)) 1 (% 0))
-						 (shift (%%))))
+	(let nfirst n arr
+		(npop (- (len arr)) n)
+						 arr))
 
-	(let nlast
-		(nshift (- (len (%%)) 1 (% 0))
-						(shift (%%))))
+	(let nlast n arr
+		(nshift (- (len arr) n)
+						arr))
 
-	(let reverse
-		(each reverse.i (range (len (%%)))
-					(% (- (len (%%)) 1 (reverse.i)))))
+	(let reverse arr
+		(each reverse.i (range (len arr))
+					(arg (- (len arr) 1 (reverse.i)))))
 
-	(let slice
-		(npop (- (% 1) (- (len (%%)) 2))
-					(nshift (+ 2 (% 0)) (%%))))
+	(let slice start off1 off2 arr
+		(npop (- (off2) (len arr))
+					(nshift off1 arr)))
 
-	(let rslice (
-		(nfirst (dec (% 0)) (nshift 2 (%%)))
-		(nlast (- (len (%%)) (% 1) 2) (nshift 2 (%%)))))
+	(let rslice start end arr (
+		(nfirst (dec start) arr)
+		(nlast (- (len arr) end) arr)))
 
-	(let contains
-		(or (each contains.i
-							(shift (%%))
-							(= (% contains.i) (% 0)))))
+	(let contains el arr
+		(or (each contains.i arr
+							(= contains.i el))))
 
-	(let find-all
-		(each find-all.i (range 1 (len (%%)))
+	(let find-all el arr
+		(each find-all.i (range 1 (inc (len arr)))
 					(if (= (% (find-all.i))
-								 (% 0))
+								 el)
 							(find-all.i))))
 
-	(let find
-		(first (find (%%))))
+	(let find el arr
+		(first (find el arr)))
 
 ))

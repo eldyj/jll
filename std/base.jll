@@ -1,34 +1,34 @@
 (if (= (def? include.base) 0) (
 
-	(let include.base (1))
+	(let include.base 1)
 
-	(let zero? (= (%%) 0))
-	(let one? (= (%%) 1))
-	(let false? (zero? (%%)))
-	(let true? (one? (%%)))
+	(let zero? elems (= elems 0))
+	(let one? elems (= elems 1))
+	(let false? elems (zero? elems))
+	(let true? elems (one? elems))
 
-	(let or
-		(bit-or (each or.i (%%) (true? (or.i)))))
+	(let or elems
+		(bit-or (each or.i elems (true? (or.i)))))
 
-	(let and
-		(true? (%%)))
+	(let and elems
+		(true? elems))
 
-	(let not
-		(each not.i (%%) (zero? (not.i))))
+	(let not elems
+		(each not.i elems (zero? (not.i))))
 
-	(let inc
-		(each inc.i (%%) (+ (inc.i) 1)))
+	(let inc elems
+		(each inc.i elems (+ (inc.i) 1)))
 
-	(let dec
-		(each dec.i (%%) (- (dec.i) 1)))
+	(let dec elems
+		(each dec.i elems (- (dec.i) 1)))
 
-	(let /=
-		(not (= (%%))))
+	(let /= elems
+		(not (= elems)))
 
-	(let >=
-		(not (< (%%))))
+	(let >= elems
+		(not (< elems)))
 
-	(let <=
-		(not (> (%%))))
+	(let <= elems
+		(not (> elems)))
 
 ))

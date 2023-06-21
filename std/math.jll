@@ -3,30 +3,30 @@
 
 	(include std/base)
 
-	(let factorial
-		(if (zero? (% 0))
+	(let factorial n rest
+		(if (zero? n)
 				1
-				(* (% 0)
-					 (factorial (dec (% 0))))))
+				(* n
+					 (factorial (dec n)))))
 
-	(let triangular
-		(if (zero? (% 0))
+	(let triangular n rest
+		(if (zero? n)
 				0
-				(+ (% 0)
-					 (triangular (dec (% 0))))))
+				(+ n
+					 (triangular (dec n)))))
 
-	(let fibonnacci
-		(if (or (zero? (% 0))
-						(one? (% 0)))
-				(% 0)
-				(+ (fibonnacci (dec (% 0)))
-					 (fibonnacci (- (% 0) 2)))))
+	(let fibonnacci n rest
+		(if (or (zero? n)
+						(one? n))
+				n
+				(+ (fibonnacci (dec n))
+					 (fibonnacci (- n 2)))))
 
-	(let pow
-		(if (zero? (% 0)
+	(let pow n1 n2 rest
+		(if (zero? n1
 				0
-				(if (zero? (% 1))
+				(if (zero? n2)
 						1
-						(pow (% 0) (dec (% 1)))))))
+						(* n1 (pow n1 (dec n2)))))))
 
 ))
