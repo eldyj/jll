@@ -19,4 +19,4 @@ sudo make install
 
 ## examples
 
-<a href="tree/main/examples">here<a/>
+<a href="examples">here<a/>
