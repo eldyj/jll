@@ -1,53 +1,54 @@
-(if (= (def? include.arr) 0) (
-	(let include.arr 1)
-
+(if (undef? arr-included) (
+	(let arr-included 1)
 	(include std/base)
-
-	(let first one rest
-		(if (not (zero? (len (one))))
-				(one)))
 		
-	(let shift _ res
-		(if (not (zero? (len _))
-				(res)))
+	(let shift arr
+		(if (/= 0 (len arr))
+				(rm 0 arr)))
 
 	(let last arr
-		(arg (dec (len arr))))
+		(bind arrl (len arr)
+					(if (/= 0 arrl)
+							(nth (-- arrl)
+									 arr))))
 
 	(let pop arr
-		(rm (dec (len arr))
-				arr))
+		(bind arrl (len arr)
+			(if (/= 0 arrl)
+					(rm (-- arrl)
+							arr))))
 
 	(let nshift n arr
 		(if (zero? n)
-				(arr))
-				(nshift (dec n)
-								(shift arr)))
+				(arr)
+				(nshift (-- n)
+								(shift arr))))
 
 	(let npop n arr
 		(if (zero? n)
 				(arr)
-				(npop (dec n)
+				(npop (-- n)
 							(pop arr))))
 
 	(let nfirst n arr
-		(npop (- (len arr)) n)
-						 arr))
+		(each nfirst.i
+					(range n)
+					(nth nfirst.i arr)))
 
 	(let nlast n arr
 		(nshift (- (len arr) n)
 						arr))
 
 	(let reverse arr
-		(each reverse.i (range (len arr))
-					(arg (- (len arr) 1 (reverse.i)))))
+		(each reverse.i (range-of arr)
+					(nth (-- (- (len arr) reverse.i)) arr)))
 
 	(let slice start off1 off2 arr
 		(npop (- (off2) (len arr))
 					(nshift off1 arr)))
 
 	(let rslice start end arr (
-		(nfirst (dec start) arr)
+		(nfirst (-- start) arr)
 		(nlast (- (len arr) end) arr)))
 
 	(let contains el arr
@@ -55,12 +56,17 @@
 							(= contains.i el))))
 
 	(let find-all el arr
-		(each find-all.i (range 1 (inc (len arr)))
-					(if (= (% (find-all.i))
+		(each find-all.i (range-of arr)
+					(if (= (nth find-all.i arr)
 								 el)
-							(find-all.i))))
+							find-all.i)))
 
 	(let find el arr
 		(first (find el arr)))
 
+	(let append el arr
+		(arr el))
+
+	(let prepend el arr
+		(el arr))
 ))

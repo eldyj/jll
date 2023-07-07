@@ -1,0 +1,11 @@
+(include std/string)
+
+`(
+	its part of standart string library
+
+	str-trim is removing leading and trailing spaces
+	  from string
+
+	(str-trim string))
+
+(pr (str-trim '     Hello, World!\n\n\n\n\n') '\n')

@@ -1,0 +1,17 @@
+`(
+	function defines by "let" keyword, its part of interpreter
+	last pair is code which will executes when
+	  you call this function
+
+	anything between name and code is argument name
+	last argument is array of arguments
+	  if user passed more arguments than needed
+	  also its used for just passing arrays
+
+	(let function-name arg1 arg2 arg... rest
+		(code)))
+
+(let greet name rest
+	(pr 'Hello,' name '\n'))
+
+(each i ('world' 'jll') (greet (i)))

@@ -1,0 +1,14 @@
+`(
+	iterate through "array"
+	every single element of "array"
+	  will stored in "item"
+
+	"array" can be function call (like range)
+	  or directly array (like 1 2 3)
+	
+	(each item array code))
+
+(pr
+	(each i (range 10)
+					(i 'Hello, World!'))
+	'\n')

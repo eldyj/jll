@@ -1,0 +1,10 @@
+`(
+  "pr" stays for print, its part of interpreter
+  '\n' stays for newline
+  pr joins all elements passed to it
+    by space separator and prints
+    result to console
+
+  (pr text1 text2 ...))
+
+(pr 'Hello, World!' '\n')

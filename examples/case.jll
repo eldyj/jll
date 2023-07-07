@@ -1,0 +1,29 @@
+`(
+	case is used to process different values of
+	  one array, string or number
+	
+	value to match is first argument
+	everything else is cases (even arg, if 1 indexing)
+	  and code to execute (odd arg, if 1 indexing)
+	  if value matched this case
+	if you dont provide case for last element it
+	  will default case, executes when value didnt
+	  matched any case provided before
+	
+	(case value
+		some_case some_code
+		some_case some_code
+		some_case some_code
+		default_code))
+
+(let non val rest
+	(case val
+		0 1
+		0))
+
+(let bool val rest
+	(case val
+		0 0
+		1))
+
+(pr (non 1) (non 0) (bool 69) (bool 0) '\n')

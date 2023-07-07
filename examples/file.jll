@@ -1,6 +1,0 @@
-(include std/arr)
-
-(let my-list n rest
-	(each my-list.i (range n) (range (my-list.i))))
-
-(prn (find-all 1 (my-list 10)))

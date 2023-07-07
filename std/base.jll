@@ -1,26 +1,62 @@
-(if (= (def? include.base) 0) (
+(if (undef? base-included) (
+	(let base-included 1)
 
-	(let include.base 1)
+	(let zero? elems (= 0 elems))
+	(let false? elems (= 0 elems))
+	(let one? elems (= 1 elems))
+	(let true? elems (= 1 elems))
 
-	(let zero? elems (= elems 0))
-	(let one? elems (= elems 1))
-	(let false? elems (zero? elems))
-	(let true? elems (one? elems))
+	(let first arr
+		(if (/= 0 (len arr))
+				(nth 0 arr)))
 
-	(let or elems
-		(bit-or (each or.i elems (true? (or.i)))))
+	(let range-of elems
+		(range (len elems)))
+
+	(let map fun elems
+		(each i elems (fun i)))
+
+	(let reduce fun elems
+		(bind el1 (first elems)
+					(if (one? (len elems))
+							el1
+							(fun el1 (reduce fun (shift elems))))))
+
+	(let where cond-func elems
+		(each i
+					elems
+					(if (cond-func i)
+							i)))
+
+	(let find-where cond-func elems
+		(each i
+					(range-of elems)
+					(if (cond-func (nth i elems))
+							i)))
+
+	(let swap one two rest
+		(two one))
+
+	(let ++ one rest
+		(+ one 1))
+
+	(let -- one rest
+		(- one 1))
 
 	(let and elems
 		(true? elems))
 
+	(let or elems
+		(bit-or (map true? elems)))
+		
 	(let not elems
-		(each not.i elems (zero? (not.i))))
+		(map zero? elems))
 
 	(let inc elems
-		(each inc.i elems (+ (inc.i) 1)))
+		(map ++ elems))
 
 	(let dec elems
-		(each dec.i elems (- (dec.i) 1)))
+		(map -- elems))
 
 	(let /= elems
 		(not (= elems)))
@@ -31,4 +67,30 @@
 	(let <= elems
 		(not (> elems)))
 
+	(let stringify el elems
+		(if (len (args))
+			(if (ident? el)
+					(str-collect '<fn `'
+												(ident-name el)
+												'` at '
+												(ident-addr el)
+												'>')
+					(str el))
+				'<Nil>'))
+
+	(let prn elems
+		(pr (pr elems) '\n'))
+
+	(let print elems
+		(pr (map stringify elems)))
+
+	(let print-line elems
+		(pr (print elems) '\n'))
+
+	(let ask elems
+		(if (not (zero? (len elems)))
+			(bind res (input (str-collect (first elems) ' [Y/n]: '))
+				(if (contains res (chars 'yYnN'))
+						(contains res (chars 'yY'))
+						(ask (prn 'wrong answer: [yYnN] expected') elems)))))
 ))

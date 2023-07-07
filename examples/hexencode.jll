@@ -1,0 +1,33 @@
+;!/usr/bin/jll
+
+(include std/arr)
+(include std/string)
+
+(let to-hex4 d rest
+	(if (contains d (range 10))
+			(str d)
+			(as-char (+ (as-int 'a')
+									(- d 10)))))
+
+(let to-hex8 d rest
+	(str-collect
+		 (to-hex4 (>> d 4))
+		 (to-hex4 (& d 15))))
+
+(let to-hexstr s rest
+	(str-collect
+			(map to-hex8 (bytes s))))
+
+
+(bind file (get-env 'FILE')
+			(bind in
+						(if (zero? (str-len file))
+								(input '')
+								(file-read file))
+
+						(bind res (to-hexstr in)
+									(bind out
+												(get-env 'OUT')
+												(if (zero? (str-len out))
+														(prn res)
+														(file-write out res))))))

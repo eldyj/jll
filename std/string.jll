@@ -1,0 +1,90 @@
+(if (undef? string-included) (
+	(let string-included 1)
+	
+	(include std/arr)
+
+	(let char-is-space ch rest
+		(contains ch (chars ' \n\t')))
+
+	(let cs-leading-spaces cs
+		(if (char-is-space (first cs))
+			(inc (cs-leading-spaces (shift cs)))
+			0))
+
+	(let cs-trailing-spaces cs
+		(if (char-is-space (last cs))
+			(inc (cs-trailing-spaces (pop cs)))
+			0))
+
+	(let cs-trim-left cs
+		(nshift (cs-leading-spaces cs) cs))
+
+	(let cs-trim-right cs
+		(npop (cs-trailing-spaces cs) cs))
+
+	(let cs-trim cs
+		(cs-trim-right (cs-trim-left cs)))
+
+	(let str-reverse s rest
+		(str-collect (reverse (chars s))))
+
+	(let str-trim-left s rest
+		(str-collect (cs-trim-left (chars s))))
+
+	(let str-trim-right s rest
+		(str-collect (cs-trim-right (chars s))))
+
+	(let str-trim s rest
+		(str-collect (cs-trim (chars s))))
+
+	(let str-lshift n s rest
+		(str-collect (nshift n (chars s))))
+
+	(let str-rshift n s rest
+		(str-collect (npop n (chars s))))
+
+	(let str-leading-spaces s rest
+		(cs-leading-spaces (chars s)))
+
+	(let str-trailing-spaces s rest
+		(cs-trailing-spaces (chars s)))
+
+	(let str-len s rest
+		(len (chars s)))
+		
+	(let str-first s rest
+		(first (chars s)))
+
+	(let str-nfirst n s rest
+		(str-collect (nfirst n (chars s))))
+
+	(let str-starts-with s src rest
+		(if (<= (str-len s) (str-len src))
+				(= s (str-nfirst (str-len s) src))
+				0))
+
+	(let str-ends-with s src rest
+		(if (and (<= (str-len s) (str-len src))
+						 (not (zero? (str-len src)) (zero? (str-len s)))
+				(= s (str-nlast (str-len s) src))
+				0)))
+
+	(let str-contains s src rest
+		(if (<= (str-len s) (str-len src))
+				(if (str-starts-with s src)
+						1
+						(str-contains s (str-lshift 1 src)))
+				0))
+
+	(let str-mul n str rest
+		(if (zero? n)
+				''
+				(str-collect str (str-mul (dec n) str))))
+
+	(let str-join sep strs
+		(if (one? (len strs))
+			strs
+			(str-collect (first strs)
+									 sep
+									 (str-join sep (shift strs)))))
+))

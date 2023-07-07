@@ -1,0 +1,12 @@
+`(
+	its parts of interpreter
+
+	write "content" to file "filename"
+	(file-write filename content)
+
+	its also part of interpreter
+	read content of file "filename"
+	(file-read filename))
+
+(file-write 'hello.txt' 'Hello, World!')
+(pr (file-read 'hello.txt') '\n')

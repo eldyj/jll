@@ -1,0 +1,10 @@
+(include std/math)
+
+`(
+	its part of standart math library
+	calculates product of all numbers
+	  from 1 to n (including n)
+
+	(factorial n))
+
+(pr (factorial 9) '\n')

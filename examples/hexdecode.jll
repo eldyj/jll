@@ -1,0 +1,43 @@
+;!/usr/bin/jll
+
+(include std/arr)
+(include std/string)
+
+(let odd? n
+	(& n 1))
+
+(let from-hex4 c rest (
+	(if (contains c (chars '0123456789abcdef'))
+				(bind zc (as-int '0')
+					(bind d (- (as-int c) zc)
+							(if (contains d (range 10))
+									d
+									(+ 10 (- d (- (as-int 'a') zc))))))
+				0)))
+
+(let from-hex8 s rest
+	(bind cs (chars s)
+				(| (<< (from-hex4 (first cs)) 4)
+					 (from-hex4 (nth 1 cs)))))
+
+(let from-hexstr s rest
+	(as-str
+		(bind in (chars s)
+			(map from-hex8
+				(each i (range 0 (- (len in) (odd? (len in))) 2)
+								(str-collect (nth i in)
+														 (nth (++ i) in)))))))
+
+(bind file-name
+			(get-env 'FILE')
+			(bind inp
+						(if (zero? (str-len file-name))
+								(input '')
+								(file-read file-name))
+
+						(bind res (from-hexstr inp)
+									(bind out (get-env 'OUT')
+												(if (zero? (str-len out))
+														(prn res)
+														(file-write out res))))))
+

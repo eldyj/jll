@@ -1,0 +1,38 @@
+; you should know that before checking other examples
+; comments:
+;   comments is fragments of text which will not executed
+;   `;` is linear comment
+
+`(
+	`() is multilinear comment called "quote"
+	BUT it still handles unclosed pairs errors
+	so you should comment non-code which contains
+	pairs (which wraps this thing) or single quotes
+	it escapes string literals scopes  
+
+	you can type here whatever you want
+	
+	(blah blah blah)
+
+	it wont give error
+	here is example of invalid code (commented):
+
+	; (blah
+	; blah
+
+	it's invalid because scope isnt completed
+)
+
+`(
+  syntax notes:
+    it's S-expression based language
+    so that means all function and macro calls
+    are in this format
+      (macro-or-fun arg1 arg2 ... arg_n)
+
+    if you come from programming language which separates
+    arguments with comma you can use it by the way
+      (macro-or-fun arg1, arg2, ..., arg_n)
+
+     tokenizer will process commas same as spaces
+)

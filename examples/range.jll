@@ -1,0 +1,12 @@
+`(
+	its part of interpreter
+	
+	range returns array of numbers from "start" to "end" excluding last item
+	here is cases with different amount of arguments:
+	(range end), same as (range 0 end) and same as (range 0 end 1)
+	(range start end), same as (range start end 1)
+	(range start end step))
+
+(pr (range 10) '\n')
+(pr (range 1 10) '\n')
+(pr (range 1 10 2) '\n')

@@ -1,0 +1,9 @@
+(include std/math)
+
+`(
+	its a part of standart math library
+	calculates nth fibonnacci sequence
+	
+	(fibonnacci n))
+
+(pr (fibonnacci 10) '\n')

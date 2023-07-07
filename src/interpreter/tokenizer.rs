@@ -10,6 +10,7 @@ pub enum Token {
 	Ident(String),
 }
 
+#[derive(PartialEq)]
 pub enum TokenKind {
 	Nil,
 	Str,
@@ -47,26 +48,35 @@ pub fn token_show(t: &Token) -> String {
 	}
 }
 
-// was needed for debug //;
+/* // was needed for debug //;
 pub fn print_tokens(v: &Vec<Token>) -> () {
 	for i in 0..v.len() {
 		println!("tokens[{}] => {}", i, token_show(&v[i]));
 	}
-}
+} */
 
 macro_rules! token_push_new {
-	($token:ident, $kind:ident, $tokens:ident) =>	{
+	($token:ident, $kind:ident, $tokens:ident, $deref:ident, $next_kind:path) => {
+		if $deref && $kind != TokenKind::Ident {
+			eprintln!("ERR: tokenizer: {} given, ident expected for `!`",
+								token_kind(&$kind));			
+		}
+
 		match $kind {
 			TokenKind::Nil => {
 				// VOID //;
 			}
 
 			TokenKind::Digit => {
-				$tokens.push(Token::Digit($token.parse::<u128>().expect("atoi failed")));
+				$tokens.push(Token::Digit($token.parse::<u128>().unwrap()));
 			}
 
 			TokenKind::Ident => {
 				$tokens.push(Token::Ident($token.clone()));
+				if $deref {
+					$tokens.push(Token::CPair);
+					$deref = false;
+				}
 			}
 
 			TokenKind::OPair => {
@@ -83,8 +93,12 @@ macro_rules! token_push_new {
 		}
 		
 		$token = String::new();
-		$kind = TokenKind::Nil;
-	}
+		$kind = $next_kind;
+	};
+
+	($token:ident, $kind:ident, $tokens:ident, $deref:ident) => {
+		token_push_new!($token, $kind, $tokens, $deref, TokenKind::Nil);
+	};
 }
 
 pub fn tokenize(s: &str) -> Vec<Token> {
@@ -93,8 +107,12 @@ pub fn tokenize(s: &str) -> Vec<Token> {
 	let mut kind: TokenKind = TokenKind::Nil;
 	let mut tokens: Vec<Token> = Vec::new();
 	let mut pairs: u16 = 0;
+	let mut in_quote: bool = false;
+	let mut quote_start: bool = false;
+	let mut quote_level: usize = 0;
+	let mut deref: bool = false;
 
-	for c in s.chars() {
+	for c in s.chars().into_iter() {
 		match state {
 			TokenizerState::InComment => {
 				if c == '\n' {
@@ -106,7 +124,9 @@ pub fn tokenize(s: &str) -> Vec<Token> {
 				match c {
 					'\'' => {
 						state = TokenizerState::Common;
-						token_push_new!(tmp_st, kind, tokens);
+						if !in_quote {
+							token_push_new!(tmp_st, kind, tokens, deref);
+						}
 					}
 
 					'\\' => {
@@ -114,23 +134,27 @@ pub fn tokenize(s: &str) -> Vec<Token> {
 					}
 
 					_ => {
-						tmp_st.push(c);
+						if !in_quote {
+							tmp_st.push(c);
+						}
 					}
 				}
 			}
 
 			TokenizerState::InStringEscape => {
-				match c {
-					't' => {
-						tmp_st.push('\t');
-					}
+				if !in_quote {
+					match c {
+						't' => {
+							tmp_st.push('\t');
+						}
 
-					'n' => {
-						tmp_st.push('\n');
-					}
+						'n' => {
+							tmp_st.push('\n');
+						}
 
-					_ => {
-						tmp_st.push(c);
+						_ => {
+							tmp_st.push(c);
+						}
 					}
 				}
 				
@@ -141,70 +165,138 @@ pub fn tokenize(s: &str) -> Vec<Token> {
 				match c {
 					'\'' => {
 						state = TokenizerState::InString;
-						kind = TokenKind::Str;
+						if !in_quote {
+							kind = TokenKind::Str;
+						}
+					}
+
+					'!' => {
+						if !in_quote {
+							token_push_new!(tmp_st, kind, tokens, deref, TokenKind::OPair);
+							token_push_new!(tmp_st, kind, tokens, deref, TokenKind::Ident);
+							tmp_st.push('!');
+							token_push_new!(tmp_st, kind, tokens, deref);
+							deref = true;
+						}
 					}
 
 					' '|'\t'|'\n' => {
-						token_push_new!(tmp_st, kind, tokens);
+						if !in_quote {
+							token_push_new!(tmp_st, kind, tokens, deref);
+						}
+					}
+
+					'`' => {
+						if !in_quote && !quote_start {
+							quote_start = true;
+						} else if quote_start {
+							eprintln!(
+								"ERR: tokenizer: '`' found while expected '(' to start quote");
+
+							return vec![];
+						}
 					}
 
 					'(' => {
-						token_push_new!(tmp_st, kind, tokens);
-						kind = TokenKind::OPair;
+						if quote_start {
+							in_quote = true;
+							quote_start = false;
+							quote_level = 0;
+						}
+						
+						if in_quote {
+							quote_level += 1;
+						} else {
+							token_push_new!(tmp_st, kind, tokens, deref, TokenKind::OPair);
+							token_push_new!(tmp_st, kind, tokens, deref);
+						}
 						pairs += 1;
-						token_push_new!(tmp_st, kind, tokens);
 					}
 
 					')' => {
-						token_push_new!(tmp_st, kind, tokens);
-
 						if pairs == 0 {
-							eprintln!("mismatched pair after {}", token_kind(&kind));
+							eprintln!("ERR: tokenizer: mismatched pair after {}",
+												token_kind(&kind));
+
+							return vec![];
+						}
+
+						if in_quote {
+							quote_level -= 1;
+							if quote_level == 0 {
+								in_quote = false;
+							}
 						} else {
-							pairs -= 1;
+							token_push_new!(tmp_st, kind, tokens, deref, TokenKind::CPair);
+							token_push_new!(tmp_st, kind, tokens, deref);
 						}
 						
-						kind = TokenKind::CPair;
-						token_push_new!(tmp_st, kind, tokens);
+						pairs -= 1;
 					}
 
 					';' => {
-						token_push_new!(tmp_st, kind, tokens);
+						if !in_quote {
+							token_push_new!(tmp_st, kind, tokens, deref);
+						}
+						
 						state = TokenizerState::InComment;
 					}
 
 					'0'..='9' => {
-						match kind {
-							TokenKind::Nil => {
-								kind = TokenKind::Digit;
-								tmp_st.push(c);
-							}
+						if !in_quote {
+							match kind {
+								TokenKind::Nil => {
+									kind = TokenKind::Digit;
+									tmp_st.push(c);
+								}
 
-							TokenKind::Digit|TokenKind::Ident => {
-								tmp_st.push(c);
-							}
+								TokenKind::Digit|TokenKind::Ident => {
+									tmp_st.push(c);
+								}
 
-							_ => {
-								eprintln!("uncompleted token {} before digit", token_kind(&kind));
+								_ => {
+									eprintln!("ERR: tokenizer: uncompleted token {} before digit",
+														token_kind(&kind));
+
+									return vec![];
+								}
 							}
 						}
 					}
 
 					_ => {
-						match kind {
-							TokenKind::Nil => {
-								kind = TokenKind::Ident;
-								tmp_st.push(c);
-							}
+						if !in_quote {
+							match kind {
+								TokenKind::Nil => {
+									kind = TokenKind::Ident;
+									tmp_st.push(c);
+								}
 
-							TokenKind::Ident => {
-								tmp_st.push(c);
-							}
+								TokenKind::Ident => {
+									tmp_st.push(c);
+								}
 
-							_ => {
-								eprintln!("uncompleted token {} before ident", token_kind(&kind));
+								TokenKind::Digit if c == '_' => {
+									// VOID //;
+								}
+
+								_ => {
+									eprintln!("ERR: tokenizer: uncompleted token {} before ident",
+														token_kind(&kind));
+									
+									return vec![];
+								}
 							}
 						}
+					}
+				}
+
+				if c != '`' {
+					if quote_start {
+						eprintln!("ERR: tokenizer: '{}' expected '(' to start quote",
+											c);
+
+						return vec![];
 					}
 				}
 			}
@@ -213,7 +305,10 @@ pub fn tokenize(s: &str) -> Vec<Token> {
 
 	match state {
 		TokenizerState::InString|TokenizerState::InStringEscape => {
-			eprintln!("unterminated string");
+			eprintln!("ERR: tokenizer: unterminated string '{}'",
+								tmp_st);
+
+			return vec![];
 		}
 
 		_ => {
@@ -221,9 +316,13 @@ pub fn tokenize(s: &str) -> Vec<Token> {
 		}
 	}
 
-	if pairs > 0 {
-		eprintln!("unclosed pair after {}", token_kind(&kind));
+	if pairs != 0 {
+		eprintln!("ERR: tokenizer: {} unclosed pairs",
+							pairs);
+		
+		return vec![];
 	}
 
+	// print_tokens(&tokens);
 	return tokens;
 }

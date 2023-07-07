@@ -1,25 +1,36 @@
-(if (= (def? include.math) 0) (
-	(let include.math 1)
+(if (undef? math_included) (
+	(let math_included 1)
+	(include std/arr)
 
-	(include std/base)
+	(let min2 n1 n2 rest
+			(if (< n1 n2)
+					n1
+					n2))
+
+	(let max2 n1 n2 rest
+			(if (> n1 n2)
+					n1
+					n2))
+
+	(let min arr
+			(reduce min2 arr))
+
+	(let max arr
+			(reduce max2 arr))
 
 	(let factorial n rest
 		(if (zero? n)
-				1
-				(* n
-					 (factorial (dec n)))))
+			1
+			(* (range 1 (++ n)))))
 
 	(let triangular n rest
-		(if (zero? n)
-				0
-				(+ n
-					 (triangular (dec n)))))
+			 (+ (range (++ n))))
 
 	(let fibonnacci n rest
 		(if (or (zero? n)
 						(one? n))
 				n
-				(+ (fibonnacci (dec n))
+				(+ (fibonnacci (-- n))
 					 (fibonnacci (- n 2)))))
 
 	(let pow n1 n2 rest
@@ -27,6 +38,5 @@
 				0
 				(if (zero? n2)
 						1
-						(* n1 (pow n1 (dec n2)))))))
-
+						(* n1 (pow n1 (-- n2)))))))
 ))

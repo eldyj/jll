@@ -1,0 +1,13 @@
+`(
+	its part of interpreter
+	bind is needed for storing "value" in some scope
+	  with name "var"
+
+	it runs "code" and replaces all "var" to it
+	its faster than hardcoded copy-paste by the way
+	
+	(bind var value
+		code))
+
+(bind x 10
+	(pr x x x '\n'))

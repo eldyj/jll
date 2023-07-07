@@ -1,0 +1,12 @@
+`(
+	this checks if some ident wasnt defined with "let"
+	(undef? ident)
+	
+	this checks if some ident was defined with "let"
+	(def? ident))
+
+(if (undef? include.empty-lib) (
+	(let include.empty-lib 1)
+
+	`(code here)
+))

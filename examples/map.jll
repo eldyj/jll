@@ -1,0 +1,9 @@
+(include std/base)
+(include std/math)
+
+`(
+	its part of standart base library
+	applies "function" to each element of "array"
+	(map function array))
+
+(pr (map fibonnacci (range 10)) '\n')
